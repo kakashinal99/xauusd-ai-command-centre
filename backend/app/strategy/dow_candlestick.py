@@ -21,15 +21,15 @@ def _confirmed_pivots(candles: list[CandleInput], left: int, right: int):
         window = candles[pivot_index - left:pivot_index + right + 1]
         pivot = candles[pivot_index]
         if all(pivot.high > c.high for offset, c in enumerate(window) if offset != left):
-            highs.append((pivot_index, pivot.high))
+            highs.append((index, pivot.high))
         if all(pivot.low < c.low for offset, c in enumerate(window) if offset != left):
-            lows.append((pivot_index, pivot.low))
+            lows.append((index, pivot.low))
     return highs, lows
 
 
 def _trend_at(highs, lows, candle_index: int) -> str | None:
-    known_highs = [price for index, price in highs if index < candle_index]
-    known_lows = [price for index, price in lows if index < candle_index]
+    known_highs = [price for confirmed_at, price in highs if confirmed_at < candle_index]
+    known_lows = [price for confirmed_at, price in lows if confirmed_at < candle_index]
     if len(known_highs) < 2 or len(known_lows) < 2:
         return None
     if known_highs[-1] > known_highs[-2] and known_lows[-1] > known_lows[-2]:
