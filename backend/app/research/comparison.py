@@ -10,7 +10,8 @@ from app.backtesting.schemas import BacktestConfig, BacktestRequest
 from app.market_data.schemas import CandleInput
 from app.strategy.donchian_atr import generate_donchian_atr_signals
 from app.strategy.dow_candlestick import generate_dow_candlestick_signals
-from app.strategy.schemas import DonchianAtrConfig, DowCandlestickConfig
+from app.strategy.rsi_mean_reversion import generate_rsi_mean_reversion_signals
+from app.strategy.schemas import DonchianAtrConfig, DowCandlestickConfig, RsiMeanReversionConfig
 
 REGIMES = ("trending", "ranging", "high_volatility", "transition")
 
@@ -73,6 +74,7 @@ def compare_strategies(
     commission_per_unit_round_trip: Decimal = Decimal("0"),
     donchian_config: DonchianAtrConfig | None = None,
     dow_config: DowCandlestickConfig | None = None,
+    rsi_config: RsiMeanReversionConfig | None = None,
 ) -> dict:
     if len(candles) < 2:
         raise ValueError("At least two candles are required")
@@ -91,6 +93,7 @@ def compare_strategies(
     registry = {
         "donchian_atr": generate_donchian_atr_signals(candles, donchian_config),
         "dow_candlestick": generate_dow_candlestick_signals(candles, dow_config),
+        "rsi_mean_reversion": generate_rsi_mean_reversion_signals(candles, rsi_config),
     }
     comparison = {}
     for name, signals in registry.items():
