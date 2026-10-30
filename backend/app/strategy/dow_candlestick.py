@@ -95,7 +95,8 @@ def generate_dow_candlestick_signals(
         elif trend == "bearish" and bearish_pattern:
             stop = current.high + atr * config.stop_atr_buffer
             risk = stop - current.close
-            if risk > ZERO:
+            target = current.close - risk * config.reward_risk_ratio
+            if risk > ZERO and target > ZERO:
                 signals.append(TradeSignal(signal_time=current.open_time, direction="short",
-                    stop_loss=stop, take_profit=current.close - risk * config.reward_risk_ratio))
+                    stop_loss=stop, take_profit=target))
     return signals
