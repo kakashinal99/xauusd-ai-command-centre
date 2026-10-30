@@ -19,3 +19,7 @@ This Donchian/ATR strategy is a **pipeline test strategy only**. It is not the u
 - ATR is a simple moving average of true range, not Wilder's smoothed ATR.
 - No parameter optimization, strategy discovery, AI-generated rule mutation, or live activation is included.
 - Always test with realistic broker spread, slippage, commission, symbol contract details, out-of-sample periods, and walk-forward validation.
+
+## API endpoint
+
+A research-only endpoint is available at `POST /api/v1/research/backtest/donchian-atr`. Submit chronological validated XAUUSD candles, optional Donchian/ATR settings, starting equity, risk percentage, spread, slippage, and commission. It returns the backtest metrics and trade list. The endpoint does not access cTrader or execute orders.
