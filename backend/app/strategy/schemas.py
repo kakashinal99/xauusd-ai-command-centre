@@ -25,6 +25,17 @@ class StrategyBacktestRequest(BaseModel):
     commission_per_unit_round_trip: Decimal = Field(default=Decimal("0"), ge=0)
 
 
+ 
+class RsiMeanReversionConfig(BaseModel):
+    """RSI threshold-recovery mean-reversion settings."""
+    model_config = ConfigDict(frozen=True)
+    rsi_period: int = Field(default=14, ge=2, le=200)
+    atr_period: int = Field(default=14, ge=2, le=200)
+    oversold: Decimal = Field(default=Decimal("30"), ge=0, lt=Decimal("50"))
+    overbought: Decimal = Field(default=Decimal("70"), gt=Decimal("50"), le=100)
+    atr_stop_multiple: Decimal = Field(default=Decimal("1.5"), gt=0, le=Decimal("10"))
+    reward_risk_ratio: Decimal = Field(default=Decimal("1.5"), gt=0, le=Decimal("10"))
+
 
 class DowCandlestickConfig(BaseModel):
     """Mechanical Dow structure and candle-confirmation settings."""
