@@ -30,3 +30,7 @@ Pivot left/right bars, ATR period, ATR stop buffer, reward-to-risk ratio, and wi
 ## Research warning
 
 This is a mechanical interpretation of Dow Theory and selected candlestick patterns, not a complete discretionary Dow Theory system. Candlestick names are not sufficient evidence of edge. Validate on Pepperstone cTrader historical XAUUSD data with realistic symbol economics, out-of-sample and walk-forward tests, and Monte Carlo analysis before considering deployment.
+
+## API endpoint
+
+Research endpoint: POST /api/v1/research/backtest/dow-candlestick. It accepts chronological validated XAUUSD candles, strategy parameters, initial equity, risk percentage, spread, slippage, and commission. The response uses the common backtest result schema. It cannot connect to the broker or execute trades.
