@@ -6,7 +6,8 @@ from app.backtesting.engine import run_backtest
 from app.backtesting.schemas import BacktestConfig, BacktestRequest, BacktestResult
 from app.config import get_settings
 from app.strategy.donchian_atr import generate_donchian_atr_signals
-from app.strategy.schemas import StrategyBacktestRequest
+from app.strategy.dow_candlestick import generate_dow_candlestick_signals
+from app.strategy.schemas import DowStrategyBacktestRequest, StrategyBacktestRequest
 
 settings = get_settings()
 app = FastAPI(
@@ -41,6 +42,21 @@ def api_status() -> dict[str, str]:
 def backtest_donchian_atr(payload: StrategyBacktestRequest) -> BacktestResult:
     """Run a research-only baseline strategy backtest. This endpoint cannot trade."""
     signals = generate_donchian_atr_signals(payload.candles, payload.strategy)
+    config = BacktestConfig(
+        initial_equity=payload.initial_equity,
+        risk_per_trade_pct=payload.risk_per_trade_pct,
+        spread=payload.spread,
+        slippage_per_side=payload.slippage_per_side,
+        commission_per_unit_round_trip=payload.commission_per_unit_round_trip,
+    )
+    request = BacktestRequest(candles=payload.candles, signals=signals, config=config)
+    return run_backtest(request)
+
+
+@app.post(f"{settings.api_v1_prefix}/research/backtest/dow-candlestick", response_model=BacktestResult, tags=["research"])
+def backtest_dow_candlestick(payload: DowStrategyBacktestRequest) -> BacktestResult:
+    """Run Dow Theory plus candlestick confirmation research. This endpoint cannot trade."""
+    signals = generate_dow_candlestick_signals(payload.candles, payload.strategy)
     config = BacktestConfig(
         initial_equity=payload.initial_equity,
         risk_per_trade_pct=payload.risk_per_trade_pct,
