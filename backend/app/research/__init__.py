@@ -1,0 +1,1 @@
+"""Multi-strategy research and market-regime analysis."""
