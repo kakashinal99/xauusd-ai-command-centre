@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from app.backtesting.engine import run_backtest
 from app.backtesting.schemas import BacktestConfig, BacktestRequest, BacktestResult
 from app.config import get_settings
+from app.research.comparison import compare_strategies
+from app.research.schemas import StrategyComparisonRequest
 from app.strategy.donchian_atr import generate_donchian_atr_signals
 from app.strategy.dow_candlestick import generate_dow_candlestick_signals
 from app.strategy.schemas import DowStrategyBacktestRequest, StrategyBacktestRequest
@@ -66,3 +68,21 @@ def backtest_dow_candlestick(payload: DowStrategyBacktestRequest) -> BacktestRes
     )
     request = BacktestRequest(candles=payload.candles, signals=signals, config=config)
     return run_backtest(request)
+
+
+@app.post(f"{settings.api_v1_prefix}/research/compare-strategies", tags=["research"])
+def compare_all_strategies(payload: StrategyComparisonRequest) -> dict:
+    """Run every registered research strategy side by side and attribute trades by regime.
+
+    Research only. This endpoint never chooses a live strategy or submits orders.
+    """
+    return compare_strategies(
+        candles=payload.candles,
+        initial_equity=payload.initial_equity,
+        risk_per_trade_pct=payload.risk_per_trade_pct,
+        spread=payload.spread,
+        slippage_per_side=payload.slippage_per_side,
+        commission_per_unit_round_trip=payload.commission_per_unit_round_trip,
+        donchian_config=payload.donchian,
+        dow_config=payload.dow_candlestick,
+    )
