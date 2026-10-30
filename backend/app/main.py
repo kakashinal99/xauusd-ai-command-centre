@@ -85,4 +85,5 @@ def compare_all_strategies(payload: StrategyComparisonRequest) -> dict:
         commission_per_unit_round_trip=payload.commission_per_unit_round_trip,
         donchian_config=payload.donchian,
         dow_config=payload.dow_candlestick,
+        rsi_config=payload.rsi_mean_reversion,
     )
