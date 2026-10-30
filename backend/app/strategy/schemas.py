@@ -3,6 +3,8 @@
 from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.market_data.schemas import CandleInput
+
 
 class DonchianAtrConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -14,7 +16,7 @@ class DonchianAtrConfig(BaseModel):
 
 class StrategyBacktestRequest(BaseModel):
     """API payload for running the baseline strategy through the backtester."""
-    candles: list = Field(min_length=2)
+    candles: list[CandleInput] = Field(min_length=2)
     strategy: DonchianAtrConfig = DonchianAtrConfig()
     initial_equity: Decimal = Field(default=Decimal("10000"), gt=0)
     risk_per_trade_pct: Decimal = Field(default=Decimal("0.25"), gt=0, le=Decimal("1"))
