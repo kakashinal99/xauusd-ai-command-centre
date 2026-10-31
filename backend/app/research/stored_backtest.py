@@ -22,7 +22,7 @@ router = APIRouter(prefix="/research", tags=["research"])
 class StoredBacktestRequest(BaseModel):
     symbol: Literal["XAUUSD"] = "XAUUSD"
     timeframe: Literal["M1"] = "M1"
-    limit: int = Field(default=10000, ge=100, le=50000)
+    limit: int | None = Field(default=None, ge=100)
     start_time: datetime | None = None
     end_time: datetime | None = None
     strategy: Literal["donchian_atr"] = "donchian_atr"
@@ -54,9 +54,10 @@ async def backtest_stored_candles(
         filters.append(Candle.open_time <= payload.end_time)
 
     count = await session.scalar(select(func.count()).select_from(Candle).where(*filters))
-    rows = await session.scalars(
-        select(Candle).where(*filters).order_by(Candle.open_time.desc()).limit(payload.limit)
-    )
+    query = select(Candle).where(*filters).order_by(Candle.open_time.asc())
+    if payload.limit is not None:
+        query = query.limit(payload.limit)
+    rows = await session.scalars(query)
     stored = list(reversed(rows.all()))
     if len(stored) < 100:
         raise HTTPException(
@@ -87,6 +88,7 @@ async def backtest_stored_candles(
         "timeframe": payload.timeframe,
         "candles_used": len(candles),
         "matching_candles_available": count or 0,
+        "limit_applied": payload.limit,
         "first_candle": candles[0].open_time,
         "last_candle": candles[-1].open_time,
         "strategy": payload.strategy,
