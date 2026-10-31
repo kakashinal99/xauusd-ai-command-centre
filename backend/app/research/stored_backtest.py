@@ -58,7 +58,7 @@ async def backtest_stored_candles(
     if payload.limit is not None:
         query = query.limit(payload.limit)
     rows = await session.scalars(query)
-    stored = list(reversed(rows.all()))
+    stored = list(rows.all())
     if len(stored) < 100:
         raise HTTPException(
             status_code=422,
