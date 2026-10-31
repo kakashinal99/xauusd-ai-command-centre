@@ -42,19 +42,18 @@ def test_breakout_retest_waits_for_retest_confirmation():
 
 def test_breakout_without_retest_does_not_emit_signal():
     start = datetime(2025, 1, 1, tzinfo=timezone.utc)
-    closes = [100, 100, 100, 103, 104, 105, 106]
-    candles = []
-    for i, close in enumerate(closes):
-        open_price = Decimal(str(close - 1))
-        close_price = Decimal(str(close))
-        candles.append(CandleInput(
-            timeframe="M15",
-            open_time=start + timedelta(minutes=15 * i),
-            open=open_price,
-            high=close_price + Decimal("1"),
-            low=open_price - Decimal("1"),
-            close=close_price,
-        ))
+    raw = [
+        (100, 101, 99, 100), (100, 101, 99, 100),
+        (100, 101, 99, 100), (100, 104, 99, 103),
+        (104.5, 106, 104.2, 105.5), (105.5, 107, 105.2, 106.5),
+        (106.5, 108, 106.2, 107.5),
+    ]
+    candles = [CandleInput(
+        timeframe="M15",
+        open_time=start + timedelta(minutes=15 * i),
+        open=Decimal(str(o)), high=Decimal(str(h)),
+        low=Decimal(str(l)), close=Decimal(str(c)),
+    ) for i, (o, h, l, c) in enumerate(raw)]
     config = BreakoutRetestConfig(
         lookback=3, retest_window=2, atr_period=2,
         retest_tolerance_atr=Decimal("0.1"),
