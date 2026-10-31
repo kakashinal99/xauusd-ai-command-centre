@@ -15,4 +15,5 @@ class StrategyComparisonRequest(BaseModel):
     commission_per_unit_round_trip: Decimal = Field(default=Decimal("0"), ge=0)
     donchian: DonchianAtrConfig = DonchianAtrConfig()
     dow_candlestick: DowCandlestickConfig = DowCandlestickConfig()
-    rsi_mean_reversion: RsiMeanReversionConfig = RsiMeanReversionConfig()\n    breakout_retest: BreakoutRetestConfig = BreakoutRetestConfig()
+    rsi_mean_reversion: RsiMeanReversionConfig = RsiMeanReversionConfig()
+    breakout_retest: BreakoutRetestConfig = BreakoutRetestConfig()
