@@ -1,6 +1,7 @@
 """FastAPI application entry point."""
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.backtesting.engine import run_backtest
 from app.backtesting.schemas import BacktestConfig, BacktestRequest, BacktestResult
@@ -17,6 +18,13 @@ app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
     description="Backend foundation for a demo-first XAUUSD trading research platform.",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://xauusd-ai-command-centre.onrender.com"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "X-Ingest-Key"],
 )
 
 
