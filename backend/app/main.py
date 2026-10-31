@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from app.backtesting.engine import run_backtest
 from app.backtesting.schemas import BacktestConfig, BacktestRequest, BacktestResult
 from app.config import get_settings
+from app.market_data.api import initialize_storage, router as market_data_router
 from app.research.comparison import compare_strategies
 from app.research.schemas import StrategyComparisonRequest
 from app.strategy.donchian_atr import generate_donchian_atr_signals
@@ -17,6 +18,15 @@ app = FastAPI(
     version="0.1.0",
     description="Backend foundation for a demo-first XAUUSD trading research platform.",
 )
+
+
+app.include_router(market_data_router, prefix=settings.api_v1_prefix)
+
+
+@app.on_event("startup")
+async def startup_storage() -> None:
+    if settings.database_url:
+        await initialize_storage()
 
 
 @app.get("/", tags=["system"])
