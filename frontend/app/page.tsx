@@ -22,7 +22,7 @@ function Icon({ children }: { children: React.ReactNode }) {
   return <span className="nav-icon" aria-hidden="true">{children}</span>;
 }
 
-export default function DashboardPage() {
+function DashboardContent({ onLogout, email }: { onLogout: () => void; email: string }) {
   const [storage, setStorage] = useState<{candles:number;ticks:number;latest_candle:string|null;latest_tick:string|null}|null>(null);
   const [apiState, setApiState] = useState<"checking"|"online"|"offline">("checking");
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function DashboardPage() {
       <section className="main">
         <header className="topbar">
           <div><div className="eyebrow">TRADING INTELLIGENCE / OVERVIEW</div><h1>Market overview</h1></div>
-          <div className="top-actions"><span className="demo-pill">● DEMO DATA</span><div className="avatar">AI</div></div>
+          <div className="top-actions"><span className="demo-pill">● DEMO DATA</span><div className="account-chip">{email}</div><button className="logout-button" onClick={onLogout}>SIGN OUT</button></div>
         </header>
 
         <div className="notice"><span>i</span><div><strong>Preview environment</strong><p>Illustrative market values only. Live Pepperstone cTrader data is not connected yet. No orders can be placed from this dashboard.</p></div></div>
@@ -86,4 +86,72 @@ export default function DashboardPage() {
       </section>
     </main>
   );
+}
+
+
+type AuthUser = { id: string; email: string };
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+
+export default function DashboardPage() {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [token, setToken] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mode, setMode] = useState<"login" | "register">("login");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const saved = window.sessionStorage.getItem("xauusd_access_token");
+    if (!saved || !API_BASE) { setChecking(false); return; }
+    fetch(API_BASE + "/api/v1/auth/me", { headers: { Authorization: "Bearer " + saved } })
+      .then(async (r) => { if (!r.ok) throw new Error("Session expired"); return r.json(); })
+      .then((data) => { setToken(saved); setUser(data); })
+      .catch(() => window.sessionStorage.removeItem("xauusd_access_token"))
+      .finally(() => setChecking(false));
+  }, []);
+
+  async function submitAuth(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true); setMessage("");
+    try {
+      const response = await fetch(API_BASE + "/api/v1/auth/" + mode, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "Authentication failed");
+      window.sessionStorage.setItem("xauusd_access_token", data.access_token);
+      setToken(data.access_token); setUser(data.user);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to connect to the account service");
+    } finally { setBusy(false); }
+  }
+
+  function logout() {
+    window.sessionStorage.removeItem("xauusd_access_token");
+    setToken(""); setUser(null); setPassword("");
+  }
+
+  if (checking) return <main className="auth-screen"><div className="auth-card">Checking your session…</div></main>;
+  if (!user || !token) return (
+    <main className="auth-screen">
+      <form className="auth-card" onSubmit={submitAuth}>
+        <div className="auth-mark">X</div>
+        <div className="eyebrow">XAUUSD / PRIVATE WORKSPACE</div>
+        <h1>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
+        <p className="auth-copy">Sign in to access your personal trading research workspace.</p>
+        <label>Email address<input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label>
+        <label>Password<input type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={mode === "register" ? 12 : 1} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "register" ? "At least 12 characters" : "Your password"} /></label>
+        {message && <div className="auth-error">{message}</div>}
+        <button className="auth-submit" type="submit" disabled={busy || !API_BASE}>{busy ? "PLEASE WAIT…" : mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}</button>
+        {!API_BASE && <div className="auth-error">Account service is not configured yet. Please try again later.</div>}
+        <p className="auth-switch">{mode === "login" ? "New here?" : "Already registered?"} <button type="button" onClick={() => { setMode(mode === "login" ? "register" : "login"); setMessage(""); }}> {mode === "login" ? "Create account" : "Sign in"}</button></p>
+        <small className="auth-security">Passwords are hashed on the server. Your workspace requires an authenticated account.</small>
+      </form>
+    </main>
+  );
+  return <DashboardContent onLogout={logout} email={user.email} />;
 }
