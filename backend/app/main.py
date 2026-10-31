@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth.api import router as auth_router
+from app.auth.workspace import router as account_router
 from app.backtesting.engine import run_backtest
 from app.backtesting.schemas import BacktestConfig, BacktestRequest, BacktestResult
 from app.config import get_settings
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix=settings.api_v1_prefix)
+app.include_router(account_router, prefix=settings.api_v1_prefix)
 app.include_router(market_data_router, prefix=settings.api_v1_prefix)
 
 
