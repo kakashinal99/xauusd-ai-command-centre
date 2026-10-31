@@ -3,6 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.auth.api import router as auth_router
 from app.backtesting.engine import run_backtest
 from app.backtesting.schemas import BacktestConfig, BacktestRequest, BacktestResult
 from app.config import get_settings
@@ -16,7 +17,7 @@ from app.strategy.schemas import DowStrategyBacktestRequest, StrategyBacktestReq
 settings = get_settings()
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version="0.2.0",
     description="Backend foundation for a demo-first XAUUSD trading research platform.",
 )
 app.add_middleware(
@@ -24,16 +25,18 @@ app.add_middleware(
     allow_origins=["https://xauusd-ai-command-centre.onrender.com"],
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "X-Ingest-Key"],
+    allow_headers=["Content-Type", "X-Ingest-Key", "Authorization"],
 )
 
-
+app.include_router(auth_router, prefix=settings.api_v1_prefix)
 app.include_router(market_data_router, prefix=settings.api_v1_prefix)
 
 
 @app.on_event("startup")
 async def startup_storage() -> None:
     if settings.database_url:
+        if not settings.jwt_secret:
+            raise RuntimeError("JWT_SECRET must be configured when DATABASE_URL is enabled")
         await initialize_storage()
 
 
@@ -69,8 +72,7 @@ def backtest_donchian_atr(payload: StrategyBacktestRequest) -> BacktestResult:
         slippage_per_side=payload.slippage_per_side,
         commission_per_unit_round_trip=payload.commission_per_unit_round_trip,
     )
-    request = BacktestRequest(candles=payload.candles, signals=signals, config=config)
-    return run_backtest(request)
+    return run_backtest(BacktestRequest(candles=payload.candles, signals=signals, config=config))
 
 
 @app.post(f"{settings.api_v1_prefix}/research/backtest/dow-candlestick", response_model=BacktestResult, tags=["research"])
@@ -84,16 +86,12 @@ def backtest_dow_candlestick(payload: DowStrategyBacktestRequest) -> BacktestRes
         slippage_per_side=payload.slippage_per_side,
         commission_per_unit_round_trip=payload.commission_per_unit_round_trip,
     )
-    request = BacktestRequest(candles=payload.candles, signals=signals, config=config)
-    return run_backtest(request)
+    return run_backtest(BacktestRequest(candles=payload.candles, signals=signals, config=config))
 
 
 @app.post(f"{settings.api_v1_prefix}/research/compare-strategies", tags=["research"])
 def compare_all_strategies(payload: StrategyComparisonRequest) -> dict:
-    """Run every registered research strategy side by side and attribute trades by regime.
-
-    Research only. This endpoint never chooses a live strategy or submits orders.
-    """
+    """Run every registered research strategy side by side; never submits orders."""
     return compare_strategies(
         candles=payload.candles,
         initial_equity=payload.initial_equity,
