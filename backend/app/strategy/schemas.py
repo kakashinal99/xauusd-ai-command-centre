@@ -57,3 +57,14 @@ class DowStrategyBacktestRequest(BaseModel):
     spread: Decimal = Field(default=Decimal("0"), ge=0)
     slippage_per_side: Decimal = Field(default=Decimal("0"), ge=0)
     commission_per_unit_round_trip: Decimal = Field(default=Decimal("0"), ge=0)
+
+
+class BreakoutRetestConfig(BaseModel):
+    """Close-confirmed range breakout followed by a bounded retest."""
+    model_config = ConfigDict(frozen=True)
+    lookback: int = Field(default=20, ge=3, le=500)
+    retest_window: int = Field(default=8, ge=1, le=100)
+    atr_period: int = Field(default=14, ge=2, le=200)
+    retest_tolerance_atr: Decimal = Field(default=Decimal("0.25"), ge=0, le=Decimal("2"))
+    stop_atr_buffer: Decimal = Field(default=Decimal("0.2"), ge=0, le=Decimal("5"))
+    reward_risk_ratio: Decimal = Field(default=Decimal("2"), gt=0, le=Decimal("10"))
