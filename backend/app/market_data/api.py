@@ -3,17 +3,27 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.database import get_db_session, get_engine
 from app.models import Base, Candle, MarketTick
 from app.market_data.schemas import CandleInput, normalize_candles
 
 router = APIRouter(prefix="/market-data", tags=["market-data"])
+settings = get_settings()
+
+
+async def require_ingest_key(x_ingest_key: str | None = Header(default=None)):
+    if not settings.ingest_api_key:
+        raise HTTPException(status_code=503, detail="Ingestion is disabled until INGEST_API_KEY is configured")
+    import secrets
+    if x_ingest_key is None or not secrets.compare_digest(x_ingest_key, settings.ingest_api_key):
+        raise HTTPException(status_code=401, detail="Invalid ingestion key")
 
 
 class CandleBatch(BaseModel):
@@ -28,8 +38,9 @@ class TickInput(BaseModel):
     ask: Decimal | None = None
     source: str = "manual"
 
+    @field_validator("event_time")
     @classmethod
-    def validate_event_time(cls, value):
+    def validate_event_time(cls, value: datetime):
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("event_time must include a timezone")
         return value.astimezone(timezone.utc)
@@ -46,7 +57,7 @@ async def initialize_storage() -> None:
         await connection.run_sync(Base.metadata.create_all)
 
 
-@router.post("/candles/batch")
+@router.post("/candles/batch", dependencies=[Depends(require_ingest_key)])
 async def ingest_candles(payload: CandleBatch, session: AsyncSession = Depends(get_db_session)):
     candles = normalize_candles(payload.candles)
     rows = [{
@@ -65,7 +76,7 @@ async def ingest_candles(payload: CandleBatch, session: AsyncSession = Depends(g
     return {"stored": len(rows), "symbol": "XAUUSD", "status": "persisted"}
 
 
-@router.post("/ticks/batch")
+@router.post("/ticks/batch", dependencies=[Depends(require_ingest_key)])
 async def ingest_ticks(payload: TickBatch, session: AsyncSession = Depends(get_db_session)):
     rows = []
     for tick in payload.ticks:
