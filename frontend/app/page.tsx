@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 const prices = [2318, 2320, 2317, 2324, 2322, 2327, 2325, 2331, 2328, 2334, 2332, 2337, 2335, 2340, 2338, 2344, 2341, 2346, 2343, 2349, 2347, 2352, 2348, 2354, 2351, 2357, 2354, 2359, 2356, 2362, 2359, 2365, 2361, 2367, 2364, 2370];
 const min = Math.min(...prices);
 const max = Math.max(...prices);
@@ -19,6 +23,16 @@ function Icon({ children }: { children: React.ReactNode }) {
 }
 
 export default function DashboardPage() {
+  const [storage, setStorage] = useState<{candles:number;ticks:number;latest_candle:string|null;latest_tick:string|null}|null>(null);
+  const [apiState, setApiState] = useState<"checking"|"online"|"offline">("checking");
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (!base) { setApiState("offline"); return; }
+    fetch(base + "/api/v1/market-data/summary", { cache: "no-store" })
+      .then(async (response) => { if (!response.ok) throw new Error("API unavailable"); return response.json(); })
+      .then((data) => { setStorage(data); setApiState("online"); })
+      .catch(() => setApiState("offline"));
+  }, []);
   return (
     <main className="shell">
       <aside className="sidebar">
@@ -41,6 +55,13 @@ export default function DashboardPage() {
         </header>
 
         <div className="notice"><span>i</span><div><strong>Preview environment</strong><p>Illustrative market values only. Live Pepperstone cTrader data is not connected yet. No orders can be placed from this dashboard.</p></div></div>
+
+        <section className="storage-strip" aria-label="Cloud data storage status">
+          <div><span className={apiState === "online" ? "status-led online" : "status-led"} /> CLOUD API <strong>{apiState === "online" ? "CONNECTED" : apiState === "checking" ? "CHECKING" : "NOT CONNECTED"}</strong></div>
+          <div>STORED CANDLES <strong>{storage ? storage.candles.toLocaleString() : "—"}</strong></div>
+          <div>STORED TICKS <strong>{storage ? storage.ticks.toLocaleString() : "—"}</strong></div>
+          <div>LAST MARKET UPDATE <strong>{storage?.latest_tick ? new Date(storage.latest_tick).toLocaleString() : "NO DATA"}</strong></div>
+        </section>
 
         <section className="metric-grid" id="market">
           <article className="metric-card hero-metric"><div className="metric-head">XAUUSD <span>SPOT PRICE · SAMPLE</span></div><div className="price">$2,367.40 <b>+0.42%</b></div><div className="metric-foot">Bid $2,367.20 <i/> Ask $2,367.60</div></article>
