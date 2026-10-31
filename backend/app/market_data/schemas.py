@@ -1,14 +1,18 @@
 """Provider-neutral market data contracts."""
-
 from datetime import datetime, timezone
 from decimal import Decimal
-
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+SUPPORTED_SYMBOLS = {"XAUUSD", "EURUSD"}
+
+def canonical_symbol(value: str) -> str:
+    normalized = value.strip().upper().replace("/", "").replace("_", "")
+    if normalized not in SUPPORTED_SYMBOLS:
+        raise ValueError(f"Unsupported symbol: {value}")
+    return normalized
 
 class CandleInput(BaseModel):
     model_config = ConfigDict(frozen=True)
-
     symbol: str = "XAUUSD"
     timeframe: str
     open_time: datetime
@@ -22,10 +26,7 @@ class CandleInput(BaseModel):
     @field_validator("symbol")
     @classmethod
     def normalize_symbol(cls, value: str) -> str:
-        normalized = value.strip().upper()
-        if normalized != "XAUUSD":
-            raise ValueError("This deployment is restricted to XAUUSD")
-        return normalized
+        return canonical_symbol(value)
 
     @field_validator("open_time")
     @classmethod
@@ -45,7 +46,6 @@ class CandleInput(BaseModel):
         if self.volume is not None and self.volume < 0:
             raise ValueError("volume cannot be negative")
         return self
-
 
 def normalize_candles(candles: list[CandleInput]) -> list[CandleInput]:
     """Return unique candles in chronological order; newest duplicate wins."""
