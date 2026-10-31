@@ -10,6 +10,7 @@ from app.backtesting.schemas import BacktestConfig, BacktestRequest, BacktestRes
 from app.config import get_settings
 from app.market_data.api import initialize_storage, router as market_data_router
 from app.research.comparison import compare_strategies
+from app.research.stored_backtest import router as stored_backtest_router
 from app.research.schemas import StrategyComparisonRequest
 from app.strategy.donchian_atr import generate_donchian_atr_signals
 from app.strategy.dow_candlestick import generate_dow_candlestick_signals
@@ -32,6 +33,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix=settings.api_v1_prefix)
 app.include_router(account_router, prefix=settings.api_v1_prefix)
 app.include_router(market_data_router, prefix=settings.api_v1_prefix)
+app.include_router(stored_backtest_router, prefix=settings.api_v1_prefix)
 
 
 @app.on_event("startup")
