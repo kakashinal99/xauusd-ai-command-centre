@@ -3,7 +3,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 from app.market_data.schemas import CandleInput
-from app.strategy.schemas import DonchianAtrConfig, DowCandlestickConfig, RsiMeanReversionConfig
+from app.strategy.schemas import BreakoutRetestConfig, DonchianAtrConfig, DowCandlestickConfig, RsiMeanReversionConfig
 
 
 class StrategyComparisonRequest(BaseModel):
@@ -15,4 +15,4 @@ class StrategyComparisonRequest(BaseModel):
     commission_per_unit_round_trip: Decimal = Field(default=Decimal("0"), ge=0)
     donchian: DonchianAtrConfig = DonchianAtrConfig()
     dow_candlestick: DowCandlestickConfig = DowCandlestickConfig()
-    rsi_mean_reversion: RsiMeanReversionConfig = RsiMeanReversionConfig()
+    rsi_mean_reversion: RsiMeanReversionConfig = RsiMeanReversionConfig()\n    breakout_retest: BreakoutRetestConfig = BreakoutRetestConfig()
