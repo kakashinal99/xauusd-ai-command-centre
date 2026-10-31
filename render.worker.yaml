@@ -1,0 +1,23 @@
+services:
+  - type: worker
+    name: xauusd-market-data-worker
+    runtime: docker
+    repo: https://github.com/kakashinal99/xauusd-ai-command-centre
+    branch: main
+    region: singapore
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    dockerCommand: python -m app.market_data.twelvedata_worker
+    autoDeploy: true
+    envVars:
+      - key: TWELVE_DATA_API_KEY
+        sync: false
+      - key: TWELVE_DATA_SYMBOL
+        value: EUR/USD
+      - key: BACKEND_INTERNAL_URL
+        value: https://xauusd-ai-command-centre-api.onrender.com
+      - key: INGEST_API_KEY
+        sync: false
+      - key: MARKET_DATA_PROVIDER
+        value: twelvedata
