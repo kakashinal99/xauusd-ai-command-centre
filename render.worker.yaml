@@ -5,7 +5,7 @@ services:
     repo: https://github.com/kakashinal99/xauusd-ai-command-centre
     branch: main
     region: singapore
-    plan: starter
+    plan: 0.5c-512mb
     dockerfilePath: ./Dockerfile
     dockerContext: .
     dockerCommand: python -m app.market_data.twelvedata_worker
