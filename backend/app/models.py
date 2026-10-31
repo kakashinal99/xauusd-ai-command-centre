@@ -1,14 +1,25 @@
-"""Relational storage models for normalized market data."""
+"""Relational storage models for users and normalized market data."""
 
 from datetime import datetime
 from decimal import Decimal
+from uuid import uuid4
 
-from sqlalchemy import DateTime, Index, Integer, Numeric, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Index, Integer, Numeric, String, UniqueConstraint, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):
     pass
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    email: Mapped[str] = mapped_column(String(254), unique=True, index=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(512), nullable=False)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
 class Candle(Base):
