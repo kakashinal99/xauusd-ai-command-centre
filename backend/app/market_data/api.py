@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Literal
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
@@ -47,6 +47,8 @@ async def initialize_storage() -> None:
     engine = get_engine()
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
+        # Idempotent compatibility migration for databases created before price-only ticks.
+        await connection.execute(text("ALTER TABLE market_ticks ADD COLUMN IF NOT EXISTS price NUMERIC(18, 8) NULL"))
 
 @router.post("/candles/batch", dependencies=[Depends(require_ingest_key)])
 async def ingest_candles(payload: CandleBatch, session: AsyncSession = Depends(get_db_session)):
