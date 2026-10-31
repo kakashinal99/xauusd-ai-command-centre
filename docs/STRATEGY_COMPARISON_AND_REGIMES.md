@@ -9,7 +9,7 @@ The endpoint runs every strategy currently registered in the research comparison
 Currently registered:
 - `donchian_atr`: Donchian breakout with ATR stop.
 - `dow_candlestick`: confirmed Dow swing structure with candlestick confirmation.
-- `rsi_mean_reversion`: enters when RSI recovers back above oversold or back below overbought, with an ATR-based stop.
+- `rsi_mean_reversion`: enters when RSI recovers back above oversold or back below overbought, with an ATR-based stop.\n- `breakout_retest`: requires a close beyond the prior range, followed by a bounded retest and close back on the breakout side; uses an ATR-buffered stop.
 
 The registry is intentionally explicit. Adding a strategy requires registering its signal generator and configuration in `app/research/comparison.py`.
 
@@ -34,7 +34,7 @@ Each regime subset is backtested independently from the same initial equity. The
 ## Safety and limitations
 
 - Research only. No strategy is automatically selected and no orders are sent.
-- Three registered strategies are currently included; this is not yet an exhaustive strategy library.
+- Four registered strategies are currently included; this is not yet an exhaustive strategy library.\n- Breakout/retest is a simplified mechanical rule: it does not yet model higher-timeframe levels, liquidity sweeps, order-flow confirmation or session filters. A retest must occur within the configured bar window.
 - RSI uses a simple rolling average (not Wilder RSI); it is a transparent research baseline, not a validated XAUUSD edge. Mean reversion may perform poorly during persistent directional moves.
 - The existing OHLC engine uses simplified abstract XAUUSD quantity, not Pepperstone contract/lot sizing.
 - Spread, slippage and commission defaults are zero unless supplied. Realistic broker costs must be configured before interpreting results.
