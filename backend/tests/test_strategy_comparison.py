@@ -34,7 +34,7 @@ def test_regime_classifier_labels_every_candle():
 
 def test_comparison_returns_all_registered_strategies_and_regimes():
     result = compare_strategies(make_candles())
-    assert set(result["strategies"]) == {"donchian_atr", "dow_candlestick", "rsi_mean_reversion"}
+    assert set(result["strategies"]) == {"donchian_atr", "dow_candlestick", "rsi_mean_reversion", "breakout_retest"}
     for strategy in result["strategies"].values():
         assert set(strategy["by_regime"]) == set(REGIMES)
         assert "overall" in strategy
