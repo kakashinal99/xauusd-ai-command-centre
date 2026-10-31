@@ -75,7 +75,8 @@ def compare_strategies(
     commission_per_unit_round_trip: Decimal = Decimal("0"),
     donchian_config: DonchianAtrConfig | None = None,
     dow_config: DowCandlestickConfig | None = None,
-    rsi_config: RsiMeanReversionConfig | None = None,\n    breakout_retest_config: BreakoutRetestConfig | None = None,
+    rsi_config: RsiMeanReversionConfig | None = None,
+    breakout_retest_config: BreakoutRetestConfig | None = None,
 ) -> dict:
     if len(candles) < 2:
         raise ValueError("At least two candles are required")
@@ -94,7 +95,8 @@ def compare_strategies(
     registry = {
         "donchian_atr": generate_donchian_atr_signals(candles, donchian_config),
         "dow_candlestick": generate_dow_candlestick_signals(candles, dow_config),
-        "rsi_mean_reversion": generate_rsi_mean_reversion_signals(candles, rsi_config),\n        "breakout_retest": generate_breakout_retest_signals(candles, breakout_retest_config),
+        "rsi_mean_reversion": generate_rsi_mean_reversion_signals(candles, rsi_config),
+        "breakout_retest": generate_breakout_retest_signals(candles, breakout_retest_config),
     }
     comparison = {}
     for name, signals in registry.items():
