@@ -22,7 +22,7 @@ router = APIRouter(prefix="/research", tags=["research"])
 class StoredBacktestRequest(BaseModel):
     symbol: Literal["XAUUSD"] = "XAUUSD"
     timeframe: Literal["M1"] = "M1"
-    limit: int = Field(default=5000, ge=100, le=5000)
+    limit: int = Field(default=10000, ge=100, le=50000)
     start_time: datetime | None = None
     end_time: datetime | None = None
     strategy: Literal["donchian_atr"] = "donchian_atr"
