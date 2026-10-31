@@ -1,28 +1,33 @@
-# Twelve Data market feed adapter
+# Twelve Data market feed integration
 
-This adapter retrieves XAU/USD prices and M1 candles from Twelve Data. It is a **market-data integration only**; it does not connect to a broker or submit orders.
+This integration is for market data only. It does not connect to a broker or submit trades.
 
-## Environment
+## Backend environment
 
-Set these on the backend service (never in the browser):
-
-- `TWELVE_DATA_API_KEY`: API key from your Twelve Data account.
+- `TWELVE_DATA_API_KEY`: secret key from Twelve Data.
 - `TWELVE_DATA_SYMBOL`: defaults to `XAU/USD`.
-- `TWELVE_DATA_REST_BASE_URL`: defaults to `https://api.twelvedata.com`.
-- `TWELVE_DATA_WS_URL`: defaults to `wss://ws.twelvedata.com/v1/quotes/price`.
+- `BACKEND_INTERNAL_URL`: URL reachable by the worker; defaults to `http://localhost:8000`.
+- `INGEST_API_KEY`: same secret configured on the backend ingestion API.
+- `DATABASE_URL`: PostgreSQL connection string.
 
-## Current adapter scope
+Keep all keys in hosting-provider secret settings, never in frontend code or Git.
+
+## Components
 
 - `TwelveDataProvider.latest_price()`: REST latest-price request.
-- `TwelveDataProvider.m1_candles()`: REST M1 OHLC history request.
-- The WebSocket URL and symbol settings are prepared for the streaming worker, but no always-on streaming worker is enabled by this commit.
-- The provider's price endpoint/stream supplies a single price, not an exchange-style bid/ask pair. Do not fabricate bid/ask or use this mid/last price as an executable broker quote.
+- `TwelveDataProvider.m1_candles()`: REST historical M1 candles.
+- `python -m app.market_data.twelvedata_worker`: standalone WebSocket worker with reconnect/backoff and M1 history backfill.
+- Tick storage has a dedicated `price` field for single-price provider events; it does not fabricate bid/ask.
 
-## Next integration stage
+## Deployment sequence
 
-1. Confirm XAU/USD access and actual WebSocket entitlement on the chosen Twelve Data plan.
-2. Add a dedicated always-on worker that subscribes to the price stream, reconnects with backoff, and posts ticks to the protected ingestion endpoint.
-3. Backfill M1 candles via REST and persist them through the ingestion endpoint.
-4. Validate timestamps, gaps, freshness, provider-vs-broker basis and data licensing before signals are enabled.
+1. Apply `migrations/20261031_add_market_tick_price.sql` to an existing database before deploying the model change.
+2. Configure `TWELVE_DATA_API_KEY`, `INGEST_API_KEY`, `DATABASE_URL`, and `BACKEND_INTERNAL_URL`.
+3. Deploy the backend.
+4. Run a dedicated always-on worker with `cd backend && python -m app.market_data.twelvedata_worker`.
+5. Confirm provider subscription acknowledgement, tick timestamps, M1 history and database counts.
+6. Verify the chosen Twelve Data plan explicitly includes XAU/USD streaming. REST access does not prove WebSocket entitlement.
 
-A Twelve Data API key is not required in GitHub. Add it as a secret environment variable in the backend host.
+## Important limitations
+
+Provider prices are not guaranteed executable broker bid/ask quotes. Measure basis differences against the intended broker feed before using this data for trading decisions. WebSocket access and delivery characteristics depend on the subscription. Redistribution to subscribers may require a separate commercial data licence.
